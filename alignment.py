@@ -10,13 +10,15 @@ def align_sequences(sequences):
 
     input_file = os.path.join(input_dir, "combined_sequences.fasta")
     output_file = os.path.join(input_dir, "aligned_sequences.fasta")
-    
+
+    muscle_executable = r"C:\Users\Raja\Desktop\Semester 5\Computational Biology\Final Project\muscle-win64.v5.3.exe"
+
     try:
         SeqIO.write(sequences, input_file, "fasta")
-        
+
         subprocess.run(
             [
-                "muscle",
+                muscle_executable,
                 "-align", input_file,
                 "-output", output_file,
                 "-threads", "4"
@@ -25,17 +27,17 @@ def align_sequences(sequences):
             capture_output=True,
             text=True
         )
-        
+
         alignment = AlignIO.read(output_file, "fasta")
         seq_lengths = {len(record.seq) for record in alignment}
-        
+
         if len(seq_lengths) != 1:
             raise ValueError(
                 f"Aligned sequences have inconsistent lengths: {seq_lengths}"
             )
-        
+
         return alignment
-    
+
     except subprocess.CalledProcessError as e:
         print("MUSCLE Error Output:", e.stderr)
         raise RuntimeError(f"MUSCLE alignment failed: {e}")

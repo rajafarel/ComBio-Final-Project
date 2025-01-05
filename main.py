@@ -7,11 +7,12 @@ from tree_construction import build_tree
 from visualization import visualize_tree
 from Bio import AlignIO
 
+
 class PhyloApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Phylogenetic Tree Builder")
-        self.root.geometry("600x500")
+        self.root.geometry("600x600")
         
         # Title Label
         self.label_title = tk.Label(root, text="Phylogenetic Tree Builder", font=("Arial", 16))
@@ -28,15 +29,23 @@ class PhyloApp:
         self.file_listbox = tk.Listbox(root, width=70, height=8)
         self.file_listbox.pack(pady=5)
         
-        # Processing Button
+        # Algorithm Selection
+        self.algorithm_label = tk.Label(root, text="Select Tree Construction Algorithm:")
+        self.algorithm_label.pack(pady=5)
+        
+        self.algorithm_var = tk.StringVar(value="nj")
+        self.radio_nj = tk.Radiobutton(root, text="Neighbor Joining (NJ)", variable=self.algorithm_var, value="nj")
+        self.radio_upgma = tk.Radiobutton(root, text="UPGMA", variable=self.algorithm_var, value="upgma")
+        self.radio_nj.pack()
+        self.radio_upgma.pack()
+        
+        # Buttons
         self.btn_process = tk.Button(root, text="Build Tree", command=self.build_tree)
         self.btn_process.pack(pady=5)
         
-        # Visualization Button
-        self.btn_visualize = tk.Button(root, text="Visualize Tree", command=self.visualize_tree)
-        self.btn_visualize.pack(pady=5)
+        self.btn_view = tk.Button(root, text="View Tree", command=self.view_tree)
+        self.btn_view.pack(pady=5)
         
-        # Save Button
         self.btn_save = tk.Button(root, text="Save Tree", command=self.save_tree)
         self.btn_save.pack(pady=5)
         
@@ -52,10 +61,10 @@ class PhyloApp:
         files = filedialog.askopenfilenames(filetypes=[("FASTA files", "*.fasta")])
         if files:
             self.uploaded_files = files
-            self.file_listbox.delete(0, tk.END)  # Clear previous entries
+            self.file_listbox.delete(0, tk.END)
             
             for file in files:
-                self.file_listbox.insert(tk.END, file)  # Display file paths in the listbox
+                self.file_listbox.insert(tk.END, file)
             
             self.label_status.config(text=f"{len(files)} files uploaded successfully.")
         else:
@@ -68,27 +77,28 @@ class PhyloApp:
         
         try:
             self.label_status.config(text="Processing sequences...")
-            sequences = process_sequences(self.uploaded_files)  # Combine all sequences
-            
+            sequences = process_sequences(self.uploaded_files)
+
             self.label_status.config(text="Aligning sequences...")
             alignment = align_sequences(sequences)
-            
+
             self.label_status.config(text="Computing distance matrix...")
             matrix = compute_distance_matrix(alignment)
-            
+
             self.label_status.config(text="Constructing phylogenetic tree...")
-            self.tree = build_tree(alignment, matrix)
-            
-            self.label_status.config(text="Phylogenetic tree built successfully!")
-            messagebox.showinfo("Success", "Tree construction completed successfully!")
+            method = self.algorithm_var.get()
+            self.tree = build_tree(alignment, matrix, method=method)
+
+            self.label_status.config(text=f"Phylogenetic tree built using {method.upper()}!")
+            messagebox.showinfo("Success", f"Tree construction with {method.upper()} completed successfully!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to build tree: {e}")
     
-    def visualize_tree(self):
+    def view_tree(self):
         if self.tree:
             visualize_tree(self.tree)
         else:
-            messagebox.showerror("Error", "No tree available to visualize.")
+            messagebox.showerror("Error", "No tree available to view. Please build a tree first!")
     
     def save_tree(self):
         if self.tree:
